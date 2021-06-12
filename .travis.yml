@@ -25,3 +25,4 @@ deploy:
     heroku run --app $HEROKU_APP_NAME rails db:migrate; # $HEROKU_API_KEYがあればログインは自動でできる
   on:
     branch: master # masterにマージされたときだけデプロイ
+
