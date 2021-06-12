@@ -1,0 +1,31 @@
+# docker-composeのバージョン(だいたい3)
+# key: valueで管理
+version: "3"
+
+# 新しい概念 docker volumeという行けない場所にある
+volumes:
+  db-data:
+
+services:
+  web: # 好きなの(だいたいwebかapp)
+    build: . # イメージを作る
+    ports: # -p 複数書くときは -で続ける
+      - "3000:3000"
+    volumes: # -v
+      - ".:/product-register" # hostの相対パス:/containerのパス(誰でも使えるように)
+    environment: # コンテナの環境変数
+      - "DATABASE_PASSWORD=postgres" # 本番環境を使う場合はここに書いてはだめ
+    tty: true # -itのt --tty
+    stdin_open: true # -itのi --interactive
+    depends_on: # web側ができてからbuildする
+      - db
+    links: # webからdbに繋げる
+      - db
+
+  db:
+    image: postgres # 今回は最新のdockerimageを取ってくる
+    volumes: # containerを消したときにデータベースが消えないようにする
+      - "db-data:/var/lib/postgres/data" # hostにあるものを指定しても良いが、なしが多い
+    environment: # これがないとupにならない
+      - "POSTGRES_USER=postgres"
+      - "POSTGRES_PASSWORD=postgres"
