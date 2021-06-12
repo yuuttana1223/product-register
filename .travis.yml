@@ -1,11 +1,27 @@
+# root権限
 sudo: required
 
+# dockerを使う
 services: docker
 
+# コンテナを起動
 before_install:
   - docker-compose up --build -d
+  # -uでusername, -pにpasswordを聞かれるがインタラクティブなことはできないので指定
+  # $HEROKU_USERNAMEは_でOK,API_KEYがあるから
+  - docker login -u "$HEROKU_USERNAME"  -p "$HEROKU_API_KEY" registry.heroku.com
 
+# スクリプト(テスト)を動かす
 script:
   - docker-compose exec --env "RAILS_ENV=test" web rails db:create
   - docker-compose exec --env "RAILS_ENV=test" web rails db:migrate
   - docker-compose exec --env "RAILS_ENV=test" web rails test
+
+deploy:
+  provider: script # dockerを使う特殊な方法なので -fは 指定したところにない場合でもビルドできる
+  script: # コマンドの最後にセミコロン必要
+    docker build -t registry.heroku.com/$HEROKU_APP_NAME/web -f Dockerfile.prod .;
+    docker push registry.heroku.com/$HEROKU_APP_NAME/web
+    heroku run --app $HEROKU_APP_NAME rails db:migrate; # $HEROKU_API_KEYがあればログインは自動でできる
+  on:
+    branch: master # masterにマージされたときだけデプロイ
